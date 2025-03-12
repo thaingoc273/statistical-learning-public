@@ -169,8 +169,46 @@ def snap_shot_past_future(df: pd.DataFrame, snapshot_time: datetime.datetime, pa
         
     return df_past
 
+
+def RFM_feature(df: pd.DataFrame, snapshot_time: datetime.datetime) -> pd.DataFrame:
+    # Create features from the RFM model: Recency, Frequency, and Monetary
+    # Get the snapshot of the data in the past at the snapshot_time
+
+    # Get list of unique customers until the time_snapshot
+    
+    df["total_amount"] = df["Quantity"] * df["UnitPrice"]
+    df_until_time_snapshot = df[df['InvoiceDate'] < snapshot_time]    
+    df_RFM = df_until_time_snapshot.groupby('CustomerID').agg(
+        recency=('InvoiceDate', lambda x: (snapshot_time - x.max()).days),
+        frequency=('Quantity', 'count'),
+        monetary=('total_amount', 'sum')    
+        ).reset_index()
+    df_RFM["RecencyScore"] = pd.qcut(df_RFM['recency'].rank(method="first"),5, labels=[5,4,3,2,1])
+
+    df_RFM["FrequencyScore"] = pd.qcut(df_RFM['frequency'].rank(method="first"), 5, labels=[1, 2, 3, 4, 5])
+
+    df_RFM["MonetaryScore"] = pd.qcut(df_RFM['monetary'].rank(method="first"), 5, labels=[1, 2, 3, 4, 5])
+    df_RFM.rename(columns={'CustomerID':'customer_id'}, inplace=True)
+    
+    return df_RFM
+
+def snap_shot_past_future_RFM(df: pd.DataFrame, snapshot_time: datetime.datetime, past_time_shot: int = 2, future_time_shot: int = 2) -> pd.DataFrame:
+    
+    # Create snapshot and RFM features
+    df_past_future = snap_shot_past_future(df, snapshot_time, past_time_shot, future_time_shot)
+    df_RFM = RFM_feature(df, snapshot_time)
+
+    # Merge the snapshot of the data and the RFM features
+    df_past_future_RFM = pd.merge(df_past_future, df_RFM, on='customer_id', how='left')
+    
+    return df_past_future_RFM
+
+
+# Function to create the feature mart
+
 def create_feature_mart(df, past_time_shot=3, future_time_shot=2):
     # Get time snapshots
+    
     time_snapshots = df['InvoiceDate'].unique()
     time_min = time_snapshots.min().date()
     time_max = time_snapshots.max().date()
@@ -187,9 +225,8 @@ def create_feature_mart(df, past_time_shot=3, future_time_shot=2):
 
     # Get the snapshot of the data at each time in the past
     for time_snapshot in first_days:
-        df_snapshot = snap_shot_past_future(df, time_snapshot, past_time_shot=past_time_shot, future_time_shot=future_time_shot)
+        df_snapshot = snap_shot_past_future_RFM(df, time_snapshot, past_time_shot=past_time_shot, future_time_shot=future_time_shot)        
         df_snapshot_all = pd.concat([df_snapshot_all, df_snapshot], ignore_index=True) if df_snapshot_all.shape[0] > 0 else df_snapshot
-    
     return df_snapshot_all
 
 def main():
@@ -198,16 +235,19 @@ def main():
     
     # Load and preprocess data
     input_file = 'd:/code/data/data.csv'
-    output_file = 'd:/code/data/customer_behavior_ecom_snapshot.csv'
+    output_file = 'd:/code/data/customer_behavior_ecom_snapshot_FRM.csv'
     
     df = load_and_preprocess_data(input_file)
     
     # Create feature mart
     df_feature_mart = create_feature_mart(df, past_time_shot=5, future_time_shot=2)
     
+    
     # Save results
     df_feature_mart.to_csv(output_file, index=False)
     print(f"Feature mart saved to {output_file}")
+   
+
 
 if __name__ == "__main__":
     main()
