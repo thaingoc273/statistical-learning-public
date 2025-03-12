@@ -203,7 +203,7 @@ def main():
     df = load_and_preprocess_data(input_file)
     
     # Create feature mart
-    df_feature_mart = create_feature_mart(df, past_time_shot=3, future_time_shot=2)
+    df_feature_mart = create_feature_mart(df, past_time_shot=5, future_time_shot=2)
     
     # Save results
     df_feature_mart.to_csv(output_file, index=False)
