@@ -234,8 +234,14 @@ def main():
     setup_pandas_options()
     
     # Load and preprocess data
-    input_file = 'd:/code/data/data.csv'
-    output_file = 'd:/code/data/customer_behavior_ecom_snapshot_FRM.csv'
+    # input_file = 'd:/code/data/data.csv'
+    
+    
+    # Data with two years of data
+    input_file = 'd:/code/data/online_retail_II.csv'
+    
+    
+    output_file = 'd:/code/data/customer_behavior_ecom_snapshot_FRM_two_years.csv'
     
     df = load_and_preprocess_data(input_file)
     
