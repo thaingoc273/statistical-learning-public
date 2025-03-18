@@ -11,6 +11,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.compose import ColumnTransformer
 import warnings
 import pickle
+from sklearn.model_selection import GridSearchCV
 
 def setup_pandas_options():
     """Configure pandas options and warnings"""
@@ -49,15 +50,31 @@ def training_pipeline(data_train, selected_features, target):
     pipeline = Pipeline([
     ('feature_selection', feature_selector),  # Select only the chosen features
     ('imputer', SimpleImputer(strategy='constant', fill_value=0)),  # Impute missing values with 0
-    ('classifier', CatBoostClassifier(verbose=False))  # Train model
+    ('normalizer', StandardScaler()),  # Normalize the data
+    ('classifier', RandomForestClassifier())  # Train model
     ])
 
-    # Train the model
-    pipeline.fit(data_train[selected_features], data_train[target])
+    #Grid search for hyperparameters
+    param_grid = {'classifier__n_estimators': [ 300, 500],   # Number of trees
+                    'classifier__max_depth': [4, 6, 8]}  # Depth of the trees
+
+    # Grid search for hyperparameters
+    # param_grid = {'classifier__n_estimators': [100, 300, 500],   # Number of trees
+    #                 'classifier__learning_rate': [0.01, 0.1, 1]}#,  # Learning rate
+    #                 #'classifier__depth': [4,  8, 10]}  # Depth of the trees
+
+    # Create a GridSearchCV object
+    grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
+
+    # Fit the GridSearchCV object to the training data
+    grid_search.fit(data_train, data_train[target])
+
+    model = grid_search.best_estimator_
+    
 
     #score = pipeline.score(data_train[selected_features], data_train[target])
 
-    return pipeline
+    return model
 
 def main():
 
@@ -65,7 +82,7 @@ def main():
     setup_pandas_options()
 
     # Load data
-    data_path = 'd:/code/data/customer_behavior_ecom_snapshot_FRM.csv'
+    data_path = 'd:/code/data/customer_behavior_ecom_snapshot_FRM_two_years.csv'
     data = load_data(data_path)
 
     # Split data
@@ -92,7 +109,7 @@ def main():
     pipeline = training_pipeline(data_train, selected_features, target)
     print('Model trained accuracy: ', pipeline.score(data_train, data_train[target]))
     print('Model test accuracy: ', pipeline.score(data_test, data_test[target]))
-    
+    # print(pipeline.predict_proba(data_test))
     # Save the pipeline model
     model_path = 'd:/code/statistical-learning-public/models/churn_model.pkl'
     
