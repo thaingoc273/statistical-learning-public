@@ -51,17 +51,20 @@ def training_pipeline(data_train, selected_features, target):
     ('feature_selection', feature_selector),  # Select only the chosen features
     ('imputer', SimpleImputer(strategy='constant', fill_value=0)),  # Impute missing values with 0
     ('normalizer', StandardScaler()),  # Normalize the data
-    ('classifier', RandomForestClassifier())  # Train model
+    ('classifier', CatBoostClassifier())  # Train model
     ])
 
-    #Grid search for hyperparameters
-    param_grid = {'classifier__n_estimators': [ 300, 500],   # Number of trees
-                    'classifier__max_depth': [4, 6, 8]}  # Depth of the trees
+    # Grid search for hyperparameters Logistic Regression
+    # param_grid = {'classifier__C': [0.01, 0.1, 1, 10, 100]}  # Regularization parameter
 
-    # Grid search for hyperparameters
-    # param_grid = {'classifier__n_estimators': [100, 300, 500],   # Number of trees
-    #                 'classifier__learning_rate': [0.01, 0.1, 1]}#,  # Learning rate
-    #                 #'classifier__depth': [4,  8, 10]}  # Depth of the trees
+    #Grid search for hyperparameters Random Forest
+    # param_grid = {'classifier__n_estimators': [ 300, 500],   # Number of trees
+    #                 'classifier__max_depth': [4, 6, 8]}  # Depth of the trees
+
+    # Grid search for hyperparameters Catboost
+    param_grid = {'classifier__n_estimators': [100, 300],   # Number of trees
+                    'classifier__learning_rate': [0.01, 0.1],  # Learning rate
+                    'classifier__depth': [4,  8, 10]}  # Depth of the trees
 
     # Create a GridSearchCV object
     grid_search = GridSearchCV(pipeline, param_grid, cv=5, scoring='accuracy', n_jobs=-1)
@@ -111,15 +114,15 @@ def main():
     print('Model test accuracy: ', pipeline.score(data_test, data_test[target]))
     # print(pipeline.predict_proba(data_test))
     # Save the pipeline model
-    model_path = '../models/churn_model.pkl'
+    model_path = '../models/churn_model_catboost.pkl'
     
     with open(model_path, 'wb') as f:
-        pickle.dump(pipeline, f)
+        pickle.dump(pipeline, f)    
+
+    with open(model_path, 'rb') as f:
+        pipeline_loaded = pickle.load(f)
     
-    filename = '../models/churn_model.pkl'
-    with open(filename, 'rb') as f:
-        churn_model = pickle.load(f)
-    print(churn_model)
-    print('Model loaded accuracy: ', churn_model.score(data_train, data_train[target]))
+    pipeline_loaded.predict_proba(data_test)
+    #print('Model loaded accuracy: ', pipeline_loaded.score(data_test, data_test[target]))
 if __name__ == '__main__':
     main()
