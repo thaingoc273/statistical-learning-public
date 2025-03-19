@@ -111,11 +111,15 @@ def main():
     print('Model test accuracy: ', pipeline.score(data_test, data_test[target]))
     # print(pipeline.predict_proba(data_test))
     # Save the pipeline model
-    model_path = 'd:/code/statistical-learning-public/models/churn_model.pkl'
+    model_path = '../models/churn_model.pkl'
     
     with open(model_path, 'wb') as f:
         pickle.dump(pipeline, f)
     
-
+    filename = '../models/churn_model.pkl'
+    with open(filename, 'rb') as f:
+        churn_model = pickle.load(f)
+    print(churn_model)
+    print('Model loaded accuracy: ', churn_model.score(data_train, data_train[target]))
 if __name__ == '__main__':
     main()
