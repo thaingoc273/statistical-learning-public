@@ -90,7 +90,7 @@ def main():
     setup_pandas_options()
 
     # Load data
-    data_path = 'd:/code/data/customer_behavior_ecom_snapshot_FRM_two_years.csv'
+    data_path = 'd:/code/data/customer_behavior_ecom_snapshot_FRM.csv'
     data = load_data(data_path)
 
     # Split data
@@ -103,7 +103,7 @@ def main():
 
 
     # Selected features
-    selected_features = ['customer_id', 
+    selected_features = [#'customer_id', 
             'total_successful_amount_past_5_month', 'num_successful_orders_past_5_month',
             'total_successful_amount_past_4_month', 'num_successful_orders_past_4_month',
             'total_successful_amount_past_3_month', 'num_successful_orders_past_3_month', 
@@ -117,7 +117,7 @@ def main():
     pipeline = training_pipeline(data_train, selected_features, target)
     print('Model trained accuracy: ', pipeline.score(data_train, data_train[target]))
     print('Model test accuracy: ', pipeline.score(data_test, data_test[target]))
-    # print(pipeline.predict_proba(data_test))
+   
     # Save the pipeline model
     model_path = '../models/churn_model_gradientboosting.pkl'
     
